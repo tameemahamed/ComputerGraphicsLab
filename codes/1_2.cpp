@@ -1,13 +1,20 @@
 #include <GL/glut.h>
 #include <cmath>
 
-void polynomialLine(float x1, float y1, float x2, float y2) {
-    float m = (y2 - y1) / (x2 - x1);
-    float c = y1 - m * x1;
+void ddaLine(float x1, float y1, float x2, float y2) {
+    float dx = x2 - x1;
+    float dy = y2 - y1;
+    int steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
+
+    float xIncrement = dx / steps;
+    float yIncrement = dy / steps;
+
+    float x = x1, y = y1;
     glBegin(GL_POINTS);
-    for (float x = x1; x <= x2; x += 0.01) {
-        float y = m * x + c;
+    for (int i = 0; i <= steps; i++) {
         glVertex2f(x, y);
+        x += xIncrement;
+        y += yIncrement;
     }
     glEnd();
     glFlush();
@@ -15,8 +22,8 @@ void polynomialLine(float x1, float y1, float x2, float y2) {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(1.0, 0.0, 0.0);
-    polynomialLine(100, 100, 400, 300);
+    glColor3f(0.0, 1.0, 0.0);
+    ddaLine(50, 50, 450, 300);
 }
 
 void init() {
@@ -31,7 +38,7 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Polynomial Line Algorithm");
+    glutCreateWindow("DDA Line Algorithm");
     init();
     glutDisplayFunc(display);
     glutMainLoop();

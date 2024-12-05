@@ -1,13 +1,19 @@
 #include <GL/glut.h>
 #include <cmath>
 
-void polynomialLine(float x1, float y1, float x2, float y2) {
-    float m = (y2 - y1) / (x2 - x1);
-    float c = y1 - m * x1;
+void bresenhamLine(int x1, int y1, int x2, int y2) {
+    int dx = abs(x2 - x1), dy = abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
+
     glBegin(GL_POINTS);
-    for (float x = x1; x <= x2; x += 0.01) {
-        float y = m * x + c;
-        glVertex2f(x, y);
+    while (true) {
+        glVertex2f(x1, y1);
+        if (x1 == x2 && y1 == y2) break;
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x1 += sx; }
+        if (e2 < dx) { err += dx; y1 += sy; }
     }
     glEnd();
     glFlush();
@@ -15,8 +21,8 @@ void polynomialLine(float x1, float y1, float x2, float y2) {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(1.0, 0.0, 0.0);
-    polynomialLine(100, 100, 400, 300);
+    glColor3f(0.0, 0.0, 1.0);
+    bresenhamLine(150, 150, 400, 400);
 }
 
 void init() {
@@ -31,7 +37,7 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Polynomial Line Algorithm");
+    glutCreateWindow("Bresenham's Line Algorithm");
     init();
     glutDisplayFunc(display);
     glutMainLoop();

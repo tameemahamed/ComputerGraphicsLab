@@ -1,13 +1,12 @@
 #include <GL/glut.h>
 #include <cmath>
 
-void polynomialLine(float x1, float y1, float x2, float y2) {
-    float m = (y2 - y1) / (x2 - x1);
-    float c = y1 - m * x1;
+void polynomialEllipse(int xc, int yc, int a, int b) {
     glBegin(GL_POINTS);
-    for (float x = x1; x <= x2; x += 0.01) {
-        float y = m * x + c;
-        glVertex2f(x, y);
+    for (int x = -a; x <= a; x++) {
+        float y = b * sqrt(1 - (x * x) / (float)(a * a));
+        glVertex2i(xc + x, yc + y);
+        glVertex2i(xc + x, yc - y);
     }
     glEnd();
     glFlush();
@@ -15,8 +14,8 @@ void polynomialLine(float x1, float y1, float x2, float y2) {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(1.0, 0.0, 0.0);
-    polynomialLine(100, 100, 400, 300);
+    glColor3f(1.0, 0.0, 0.0); // Red color
+    polynomialEllipse(250, 250, 150, 100); // Center (250, 250), Semi-major axis 150, Semi-minor axis 100
 }
 
 void init() {
@@ -31,7 +30,7 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Polynomial Line Algorithm");
+    glutCreateWindow("Polynomial Ellipse Algorithm");
     init();
     glutDisplayFunc(display);
     glutMainLoop();
