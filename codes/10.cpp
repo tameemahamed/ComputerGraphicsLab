@@ -1,95 +1,96 @@
 #include <GL/glut.h>
+#include <vector>
 #include <iostream>
 
-using namespace std;
-
-// Number of recursive subdivisions
-int recursionLevel = 3;
-
-// Vertices of the initial tetrahedron
-GLfloat vertices[4][3] = {
-    {0.0, 0.0, 1.0},        // Vertex 0
-    {0.0, 0.9428, -0.3333}, // Vertex 1
-    {-0.8165, -0.4714, -0.3333}, // Vertex 2
-    {0.8165, -0.4714, -0.3333}   // Vertex 3
+struct Point3D {
+    float x, y, z;
+    Point3D(float x, float y, float z) : x(x), y(y), z(z) {}
 };
 
-// Function to draw a triangle
-void drawTriangle(GLfloat* v1, GLfloat* v2, GLfloat* v3) {
-    glBegin(GL_TRIANGLES);
-    glVertex3fv(v1);
-    glVertex3fv(v2);
-    glVertex3fv(v3);
-    glEnd();
+// Initial tetrahedron vertices
+Point3D v0(-1.0f, -1.0f, -1.0f);
+Point3D v1( 1.0f, -1.0f, -1.0f);
+Point3D v2( 0.0f,  1.0f, -1.0f);
+Point3D v3( 0.0f,  0.0f,  1.0f);
+
+// Function to compute midpoint of two points
+Point3D midpoint(const Point3D &p1, const Point3D &p2) {
+    return Point3D((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, (p1.z + p2.z) / 2);
 }
 
-// Recursive function to subdivide the tetrahedron
-void divideTriangle(GLfloat* v1, GLfloat* v2, GLfloat* v3, int level) {
-    if (level == 0) {
-        drawTriangle(v1, v2, v3); // Base case: Draw triangle
+// Recursive function to draw the Sierpinski Gasket
+void drawSierpinski(const Point3D &v0, const Point3D &v1, const Point3D &v2, const Point3D &v3, int depth) {
+    if (depth == 0) {
+        // Base case: draw the tetrahedron
+        glBegin(GL_TRIANGLES);
+        glVertex3f(v0.x, v0.y, v0.z);
+        glVertex3f(v1.x, v1.y, v1.z);
+        glVertex3f(v2.x, v2.y, v2.z);
+
+        glVertex3f(v0.x, v0.y, v0.z);
+        glVertex3f(v1.x, v1.y, v1.z);
+        glVertex3f(v3.x, v3.y, v3.z);
+
+        glVertex3f(v1.x, v1.y, v1.z);
+        glVertex3f(v2.x, v2.y, v2.z);
+        glVertex3f(v3.x, v3.y, v3.z);
+
+        glVertex3f(v2.x, v2.y, v2.z);
+        glVertex3f(v0.x, v0.y, v0.z);
+        glVertex3f(v3.x, v3.y, v3.z);
+        glEnd();
     } else {
-        GLfloat mid[3][3];
-        for (int i = 0; i < 3; i++) {
-            mid[0][i] = (v1[i] + v2[i]) / 2.0; // Midpoint of v1 and v2
-            mid[1][i] = (v2[i] + v3[i]) / 2.0; // Midpoint of v2 and v3
-            mid[2][i] = (v3[i] + v1[i]) / 2.0; // Midpoint of v3 and v1
-        }
-        // Recursive subdivision
-        divideTriangle(v1, mid[0], mid[2], level - 1);
-        divideTriangle(mid[0], v2, mid[1], level - 1);
-        divideTriangle(mid[2], mid[1], v3, level - 1);
+        // Subdivide the tetrahedron and recurse
+        Point3D m0 = midpoint(v0, v1);
+        Point3D m1 = midpoint(v1, v2);
+        Point3D m2 = midpoint(v2, v0);
+        Point3D m3 = midpoint(v0, v3);
+        Point3D m4 = midpoint(v1, v3);
+        Point3D m5 = midpoint(v2, v3);
+
+        drawSierpinski(v0, m0, m2, m3, depth - 1);
+        drawSierpinski(m0, v1, m1, m4, depth - 1);
+        drawSierpinski(m1, v2, m2, m5, depth - 1);
+        drawSierpinski(m2, m0, v0, m3, depth - 1);
     }
 }
 
-// Function to draw a tetrahedron by subdividing each triangular face
-void divideTetrahedron(GLfloat* v0, GLfloat* v1, GLfloat* v2, GLfloat* v3, int level) {
-    glColor3f(1.0, 0.0, 0.0); // Red for one face
-    divideTriangle(v0, v1, v2, level);
-
-    glColor3f(0.0, 1.0, 0.0); // Green for another face
-    divideTriangle(v0, v2, v3, level);
-
-    glColor3f(0.0, 0.0, 1.0); // Blue for another face
-    divideTriangle(v0, v3, v1, level);
-
-    glColor3f(1.0, 1.0, 0.0); // Yellow for the last face
-    divideTriangle(v1, v2, v3, level);
-}
-
-// Display callback function
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -2.5); // Move back for better visibility
-    divideTetrahedron(vertices[0], vertices[1], vertices[2], vertices[3], recursionLevel);
+
+    // Set the camera position
+    glTranslatef(0.0f, 0.0f, -5.0f);
+    glRotatef(20.0f, 1.0f, 0.0f, 0.0f);
+    glRotatef(30.0f, 0.0f, 1.0f, 0.0f);
+
+    // Draw the 3D Sierpinski Gasket
+    drawSierpinski(v0, v1, v2, v3, 3); // Change depth for more/less detail
+
     glutSwapBuffers();
 }
 
-// Keyboard callback to adjust recursion level
-void keyboard(unsigned char key, int x, int y) {
-    if (key == '+') {
-        recursionLevel++;
-    } else if (key == '-' && recursionLevel > 0) {
-        recursionLevel--;
-    }
-    glutPostRedisplay(); // Redraw with new recursion level
-}
-
-// Initialization function
 void init() {
-    glEnable(GL_DEPTH_TEST); // Enable depth testing
-    glClearColor(0.0, 0.0, 0.0, 1.0); // Black background
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black background
+    glEnable(GL_DEPTH_TEST);
+    glShadeModel(GL_FLAT);
+
+    // Set up perspective projection
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0f, 1.33f, 1.0f, 100.0f); // 45 degrees FOV, aspect ratio 4:3, near/far planes
+    glMatrixMode(GL_MODELVIEW);
 }
 
-// Main function
 int main(int argc, char** argv) {
+    // Initialize GLUT
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
     glutCreateWindow("3D Sierpinski Gasket");
+
     init();
     glutDisplayFunc(display);
-    glutKeyboardFunc(keyboard);
     glutMainLoop();
     return 0;
 }
